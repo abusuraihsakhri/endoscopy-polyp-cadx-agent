@@ -2,6 +2,7 @@
 Supervisor Orchestrator & Operations Intelligence for Endoscopy Polyp Cadx Agent.
 Domain: Clinical & Biomedical AI
 """
+import math
 import uuid
 from typing import Dict, Any, List, Optional
 from .base import AuditLogger, ActionExecutor, PHIGuard
@@ -25,6 +26,16 @@ class SystemSupervisor:
         PHIGuard.assert_no_phi(payload.task_id)
         PHIGuard.assert_no_phi(payload.target_identifier)
         PHIGuard.assert_no_phi(payload.status_descriptor)
+
+        # Input bounds validation
+        if not payload.task_id or len(payload.task_id) > 256:
+            raise ValueError("task_id must be between 1 and 256 characters")
+        if not payload.target_identifier or len(payload.target_identifier) > 256:
+            raise ValueError("target_identifier must be between 1 and 256 characters")
+        if math.isnan(payload.primary_metric) or math.isinf(payload.primary_metric):
+            raise ValueError("primary_metric must be a finite number")
+        if math.isnan(payload.secondary_metric) or math.isinf(payload.secondary_metric):
+            raise ValueError("secondary_metric must be a finite number")
 
         # Multi-worker evaluations
         all_alerts: List[AgentAlert] = []

@@ -57,7 +57,19 @@ class PHIGuard:
 class AuditTrail:
     """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = (secret_key or os.getenv("AUDIT_SECRET_KEY", "endoscopy-polyp-cadx-agent-master-audit-key-2026")).encode("utf-8")
+        import secrets
+        env_key = os.getenv("AUDIT_SECRET_KEY")
+        if secret_key:
+            resolved_key = secret_key
+        elif env_key:
+            resolved_key = env_key
+        else:
+            # Development fallback: generate ephemeral key per instance
+            # In production, always set AUDIT_SECRET_KEY env var
+            resolved_key = secrets.token_hex(32)
+        if len(resolved_key) < 16:
+            raise ValueError("AUDIT_SECRET_KEY must be at least 16 characters long for security")
+        self.secret_key = resolved_key.encode("utf-8")
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:

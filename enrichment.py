@@ -3,17 +3,16 @@ Enrichment Feature Implementation for endoscopy-polyp-cadx-agent.
 Generated based on domain-specific requirements in specifications.
 """
 from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import datetime
-import math
-import json
 
 # =============================================================================
-# 1. ENRICHMENT IDEAS & IMPLEMENTATION PLANS
+# BASE ENGINE (DRY: shared logic for all enrichment engines)
 # =============================================================================
 @dataclass
-class EnrichmentIdeasImplementationPlansEngineResult:
-    feature_name: str = "Enrichment Ideas & Implementation Plans"
+class EnrichmentEngineResult:
+    """Unified result type for all enrichment engines."""
+    feature_name: str = "Enrichment"
     status: str = "OPTIMAL"
     score: float = 0.0
     metrics: Dict[str, Any] = field(default_factory=dict)
@@ -21,342 +20,96 @@ class EnrichmentIdeasImplementationPlansEngineResult:
     recommendations: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
-class EnrichmentIdeasImplementationPlansEngine:
-    """
-    Enrichment Ideas & Implementation Plans: Enrichment Ideas & Implementation Plans
-    """
+
+class BaseEnrichmentEngine:
+    """Shared threshold-based evaluation logic for all enrichment engines."""
+
+    FEATURE_NAME: str = "Enrichment"
+
     def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
         self.threshold = threshold
         self.config = config or {}
-        self.history: List[EnrichmentIdeasImplementationPlansEngineResult] = []
+        self.history: List[EnrichmentEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> EnrichmentIdeasImplementationPlansEngineResult:
-        alerts = []
-        recs = []
+    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> EnrichmentEngineResult:
+        alerts: List[str] = []
+        recs: List[str] = []
         status = "OPTIMAL"
         score = round(float(primary_value), 3)
 
         if primary_value > self.threshold * 2:
             status = "CRITICAL_ALERT"
-            alerts.append(f"Enrichment Ideas & Implementation Plans: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
+            alerts.append(
+                f"{self.FEATURE_NAME}: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})"
+            )
             recs.append("Initiate immediate protocol review and escalate to attending lead.")
         elif primary_value > self.threshold:
             status = "WARNING"
-            alerts.append(f"Enrichment Ideas & Implementation Plans: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
+            alerts.append(
+                f"{self.FEATURE_NAME}: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})"
+            )
             recs.append("Increase monitoring frequency and perform secondary verification.")
         else:
             recs.append("Parameters nominal under standard operating bounds.")
 
-        res = EnrichmentIdeasImplementationPlansEngineResult(
-            feature_name="Enrichment Ideas & Implementation Plans",
+        res = EnrichmentEngineResult(
+            feature_name=self.FEATURE_NAME,
             status=status,
             score=score,
             metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
             alerts=alerts,
-            recommendations=recs
+            recommendations=recs,
         )
         self.history.append(res)
         return res
 
-# =============================================================================
-# 2. REAL-TIME
-# =============================================================================
-@dataclass
-class RealtimeEngineResult:
-    feature_name: str = "Real-Time"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
-
-class RealtimeEngine:
-    """
-    Real-Time: **Description:** Polyp: Classification: : Live: NBI: pit: pattern: analysis: with: NICE/WASP: category: assignment: duri
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[RealtimeEngineResult] = []
-
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> RealtimeEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
-
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Real-Time: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Real-Time: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
-
-        res = RealtimeEngineResult(
-            feature_name="Real-Time",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
 
 # =============================================================================
-# 3. ENDOSCOPIST
+# CONCRETE ENGINES (thin subclasses setting FEATURE_NAME)
 # =============================================================================
-@dataclass
-class EndoscopistEngineResult:
-    feature_name: str = "Endoscopist"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
+class EnrichmentIdeasImplementationPlansEngine(BaseEnrichmentEngine):
+    """Enrichment Ideas & Implementation Plans"""
+    FEATURE_NAME = "Enrichment Ideas & Implementation Plans"
 
-class EndoscopistEngine:
-    """
-    Endoscopist: **Description:** Performance: Analytics: : Track: optical: diagnosis: accuracy: against: histopathology: for: competency
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[EndoscopistEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> EndoscopistEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
+class RealtimeEngine(BaseEnrichmentEngine):
+    """Live NBI pit pattern analysis with NICE/WASP category assignment"""
+    FEATURE_NAME = "Real-Time"
 
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Endoscopist: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Endoscopist: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
 
-        res = EndoscopistEngineResult(
-            feature_name="Endoscopist",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
+class EndoscopistEngine(BaseEnrichmentEngine):
+    """Performance Analytics: Track optical diagnosis accuracy against histopathology"""
+    FEATURE_NAME = "Endoscopist"
 
-# =============================================================================
-# 4. COLD
-# =============================================================================
-@dataclass
-class ColdEngineResult:
-    feature_name: str = "Cold"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
-class ColdEngine:
-    """
-    Cold: **Description:** Snare: vs: Hot: Polypectomy: Decision: Engine: : Recommend: resection: technique: based: on: polyp: siz
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[ColdEngineResult] = []
+class ColdEngine(BaseEnrichmentEngine):
+    """Cold vs Hot Polypectomy Decision Engine"""
+    FEATURE_NAME = "Cold"
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> ColdEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
 
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Cold: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Cold: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
+class IntervalEngine(BaseEnrichmentEngine):
+    """Interval Cancer Detection: Compare current findings with prior colonoscopy"""
+    FEATURE_NAME = "Interval"
 
-        res = ColdEngineResult(
-            feature_name="Cold",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
 
-# =============================================================================
-# 5. INTERVAL
-# =============================================================================
-@dataclass
-class IntervalEngineResult:
-    feature_name: str = "Interval"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
+class SurveillanceEngine(BaseEnrichmentEngine):
+    """Surveillance Interval Optimizer: Generate follow-up colonoscopy intervals"""
+    FEATURE_NAME = "Surveillance"
 
-class IntervalEngine:
-    """
-    Interval: **Description:** Cancer: Detection: : Compare: current: findings: with: prior: colonoscopy: for: missed: polyp: identifi
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[IntervalEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> IntervalEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
+class TrainingEngine(BaseEnrichmentEngine):
+    """Training Simulator Integration: Feed real-time polyp classification data"""
+    FEATURE_NAME = "Training"
 
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Interval: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Interval: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
 
-        res = IntervalEngineResult(
-            feature_name="Interval",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
-
-# =============================================================================
-# 6. SURVEILLANCE
-# =============================================================================
-@dataclass
-class SurveillanceEngineResult:
-    feature_name: str = "Surveillance"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
-
-class SurveillanceEngine:
-    """
-    Surveillance: **Description:** Interval: Optimizer: : Generate: follow-up: colonoscopy: intervals: based: on: polyp: burden: and: hist
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[SurveillanceEngineResult] = []
-
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> SurveillanceEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
-
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Surveillance: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Surveillance: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
-
-        res = SurveillanceEngineResult(
-            feature_name="Surveillance",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
-
-# =============================================================================
-# 7. TRAINING
-# =============================================================================
-@dataclass
-class TrainingEngineResult:
-    feature_name: str = "Training"
-    status: str = "OPTIMAL"
-    score: float = 0.0
-    metrics: Dict[str, Any] = field(default_factory=dict)
-    alerts: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
-
-class TrainingEngine:
-    """
-    Training: **Description:** Simulator: Integration: : Feed: real-time: polyp: classification: data: to: endoscopy: training: platfo
-    """
-    def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
-        self.threshold = threshold
-        self.config = config or {}
-        self.history: List[TrainingEngineResult] = []
-
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> TrainingEngineResult:
-        alerts = []
-        recs = []
-        status = "OPTIMAL"
-        score = round(float(primary_value), 3)
-
-        if primary_value > self.threshold * 2:
-            status = "CRITICAL_ALERT"
-            alerts.append(f"Training: Primary value {primary_value:.2f} breached critical threshold ({self.threshold * 2:.2f})")
-            recs.append("Initiate immediate protocol review and escalate to attending lead.")
-        elif primary_value > self.threshold:
-            status = "WARNING"
-            alerts.append(f"Training: Value {primary_value:.2f} exceeds baseline threshold ({self.threshold:.2f})")
-            recs.append("Increase monitoring frequency and perform secondary verification.")
-        else:
-            recs.append("Parameters nominal under standard operating bounds.")
-
-        res = TrainingEngineResult(
-            feature_name="Training",
-            status=status,
-            score=score,
-            metrics={"primary": primary_value, "secondary": secondary_value, **kwargs},
-            alerts=alerts,
-            recommendations=recs
-        )
-        self.history.append(res)
-        return res
+# Backwards-compatible aliases for result types
+EnrichmentIdeasImplementationPlansEngineResult = EnrichmentEngineResult
+RealtimeEngineResult = EnrichmentEngineResult
+EndoscopistEngineResult = EnrichmentEngineResult
+ColdEngineResult = EnrichmentEngineResult
+IntervalEngineResult = EnrichmentEngineResult
+SurveillanceEngineResult = EnrichmentEngineResult
+TrainingEngineResult = EnrichmentEngineResult
 
 # =============================================================================
 # COMPOSITE ENRICHMENT SUITE

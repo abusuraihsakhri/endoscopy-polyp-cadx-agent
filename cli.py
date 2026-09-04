@@ -80,6 +80,16 @@ def main(argv=None):
         return 0
 
     if args.command == "batch":
+        import os
+        # Validate input file exists and is within size limits (100MB max)
+        if not os.path.isfile(args.input):
+            print(f"Error: Input file '{args.input}' not found", file=sys.stderr)
+            return 1
+        file_size = os.path.getsize(args.input)
+        if file_size > 100 * 1024 * 1024:
+            print(f"Error: Input file exceeds maximum size of 100MB", file=sys.stderr)
+            return 1
+
         with open(args.input, mode="r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f)
             fieldnames = list(reader.fieldnames or [])
@@ -87,29 +97,45 @@ def main(argv=None):
 
         out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
         out_rows = []
-        for r in rows:
-            payload = SystemTaskPayload(
-                task_id=r.get("task_id", "TASK-01"),
-                target_identifier=r.get("target_identifier", "TARGET-01"),
-                primary_metric=float(r.get("primary_metric", 15.0)),
-                secondary_metric=float(r.get("secondary_metric", 5.0)),
-                status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
-            )
-            dossier = supervisor.process_task(payload)
-            row_dict = dict(r)
-            row_dict["overall_urgency"] = dossier.overall_urgency.value
-            row_dict["integrity_status"] = dossier.integrity_status.value
-            row_dict["total_alerts"] = dossier.total_alerts
-            row_dict["audit_hash"] = dossier.audit_hash
-            out_rows.append(row_dict)
+        errors = 0
+        for idx, r in enumerate(rows):
+            try:
+                primary_raw = r.get("primary_metric", "15.0")
+                secondary_raw = r.get("secondary_metric", "5.0")
+                try:
+                    primary_val = float(primary_raw)
+                    secondary_val = float(secondary_raw)
+                except (ValueError, TypeError) as e:
+                    raise ValueError(f"Invalid numeric value at row {idx + 1}: {e}")
+
+                is_crit_raw = r.get("is_critical_flag", "")
+                is_crit = is_crit_raw.strip().lower() in ("true", "1", "yes")
+
+                payload = SystemTaskPayload(
+                    task_id=r.get("task_id", f"TASK-{idx + 1:03d}"),
+                    target_identifier=r.get("target_identifier", f"TARGET-{idx + 1:03d}"),
+                    primary_metric=primary_val,
+                    secondary_metric=secondary_val,
+                    status_descriptor=r.get("status_descriptor", "NOMINAL"),
+                    is_critical_flag=is_crit,
+                )
+                dossier = supervisor.process_task(payload)
+                row_dict = dict(r)
+                row_dict["overall_urgency"] = dossier.overall_urgency.value
+                row_dict["integrity_status"] = dossier.integrity_status.value
+                row_dict["total_alerts"] = dossier.total_alerts
+                row_dict["audit_hash"] = dossier.audit_hash
+                out_rows.append(row_dict)
+            except Exception as e:
+                errors += 1
+                print(f"Warning: Skipping row {idx + 1}: {e}", file=sys.stderr)
 
         with open(args.output, mode="w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=out_fields)
             writer.writeheader()
             writer.writerows(out_rows)
-        print(f"Processed {len(out_rows)} records -> {args.output}")
-        return 0
+        print(f"Processed {len(out_rows)} records ({errors} errors) -> {args.output}")
+        return 0 if errors == 0 else 2
 
     if args.command == "serve":
         import uvicorn
