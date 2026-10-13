@@ -14,27 +14,64 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install fastapi uvicorn pydantic pytest
+        python -m pip install -e ".[web,dev]"
 
     - name: Run Pytest Suite
       run: |
         pytest -v
 
-    - name: Security SAST & Zero-PHI Audit
+    - name: Python syntax and package smoke test
       run: |
-        python -c "
-        from agents.base import PHIGuard, AuditLogger
-        import pytest
-        assert AuditLogger.verify_integrity() is True
-        print('Security & Zero-PHI Audit Passed!')
-        "
+        python -m compileall -q agents endo_cadx_agent cli.py enrichment.py simulator.py
+        endoscopy-polyp-cadx-agent --help
+        endoscopy-polyp-cadx-engine --help
+
+    - name: Browser JavaScript syntax
+      run: |
+        python - <<'PY'
+        from pathlib import Path
+        import re
+        import subprocess
+        html = Path("web/index.html").read_text(encoding="utf-8")
+        match = re.search(r"<script>(.*?)</script>", html, re.S)
+        assert match, "No inline application script found"
+        subprocess.run(["node", "--check"], input=match.group(1), text=True, check=True)
+        PY
+
+    - name: Browser rule evaluation integration tests
+      run: node --test tests/browser.test.cjs
+
+    - name: Ruff syntax and indentation checks
+      run: ruff check --select E4,E7,E9 .
+
+    - name: Security regression checks
+      run: |
+        python -c "from agents.base import AuditTrail; t=AuditTrail(); t.log('ci','test','EVENT',{'status':'OK'}); assert t.verify_integrity(); t.logs[0]['event_type']='TAMPERED'; assert not t.verify_integrity()"
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build container
+        run: docker build --tag endo-cadx-audit .
+      - name: Exercise container health API
+        run: |
+          docker run --detach --rm --name endo-cadx-audit --publish 127.0.0.1:8000:8000 endo-cadx-audit
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs endo-cadx-audit
+          exit 1

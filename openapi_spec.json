@@ -1,8 +1,8 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Endoscopy Polyp Cadx Engine API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
+    "title": "Endoscopy Polyp CADx Agent Rule Evaluation API",
+    "description": "Research-only synthetic numerical and descriptor rule evaluator. Does not perform endoscopy image classification or clinically validated NICE/WASP diagnosis.",
     "version": "3.0.0-ENTERPRISE",
     "contact": {
       "name": "Dr. Abu Suraih Sakhri",
@@ -22,7 +22,7 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus operational metrics",
+        "summary": "JSON process counters (not Prometheus plaintext)",
         "responses": {
           "200": {
             "description": "Prometheus text metrics"
@@ -76,7 +76,7 @@
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
+        "summary": "Deterministic mock query response (no LLM inference)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -103,12 +103,23 @@
     },
     "/api/audit/logs": {
       "get": {
-        "summary": "Retrieve and cryptographically verify HMAC audit trail",
+        "summary": "Retrieve verified in-memory audit trail with X-Audit-Token header",
         "responses": {
           "200": {
             "description": "Cryptographic audit trail"
           }
-        }
+        },
+        "parameters": [
+          {
+            "name": "X-Audit-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token set in AUDIT_LOGS_TOKEN; route disabled by default"
+          }
+        ]
       }
     }
   }

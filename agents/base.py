@@ -73,6 +73,8 @@ class AuditTrail:
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
+        for label in (actor, actor_tier, event_type):
+            assert_no_phi(label)
         payload_str = json.dumps(details, sort_keys=True)
         assert_no_phi(payload_str)
         payload_hash = hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
@@ -95,14 +97,25 @@ class AuditTrail:
         return entry
 
     def verify_integrity(self) -> bool:
-        for i, entry in enumerate(self.logs):
-            prev = self.logs[i-1]["current_hash"] if i > 0 else "GENESIS_BLOCK_0000000000000000"
-            if entry["prev_hash"] != prev:
+        """Verify every HMAC signature as well as the hash-chain links."""
+        prev_hash = "GENESIS_BLOCK_0000000000000000"
+        signed_fields = ("audit_id", "timestamp", "actor", "actor_tier",
+                         "event_type", "payload_hash", "prev_hash")
+        for entry in self.logs:
+            if entry.get("prev_hash") != prev_hash:
                 return False
+            if not all(isinstance(entry.get(key), str) for key in (*signed_fields, "current_hash")):
+                return False
+            sign_string = "|".join(entry[key] for key in signed_fields)
+            expected = hmac.new(self.secret_key, sign_string.encode("utf-8"), hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(entry["current_hash"], expected):
+                return False
+            prev_hash = entry["current_hash"]
         return True
 
     def get_trail(self) -> List[Dict[str, Any]]:
-        return self.logs
+        """Return a snapshot so callers cannot mutate the audit ledger."""
+        return [entry.copy() for entry in self.logs]
 
 
 GLOBAL_AUDIT = AuditTrail()

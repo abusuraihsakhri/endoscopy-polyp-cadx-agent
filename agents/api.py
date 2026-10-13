@@ -1,8 +1,10 @@
 """
 FastAPI REST API Server for Endoscopy Polyp Cadx Agent.
 """
-from typing import Dict, Any, List
-from fastapi import FastAPI, HTTPException
+import os
+import secrets
+from typing import Dict, Any, List, Optional
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard
 from .models import SystemTaskPayload, ConsensusDossier
@@ -12,7 +14,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 
 app = FastAPI(
     title="Endoscopy Polyp Cadx Agent API",
-    description="Enterprise Distributed Component Platform (Clinical & Biomedical AI)",
+    description="Research-only threshold and descriptor rule evaluator. No endoscopy image analysis or clinical diagnosis.",
     version="3.0.0-ENTERPRISE",
 )
 
@@ -56,5 +58,9 @@ def api_chat(req: ChatRequest):
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(x_audit_token: Optional[str] = Header(default=None)):
+    """Disable audit-log exposure unless an operator sets a dedicated access token."""
+    required_token = os.getenv("AUDIT_LOGS_TOKEN")
+    if not required_token or not x_audit_token or not secrets.compare_digest(required_token, x_audit_token):
+        raise HTTPException(status_code=403, detail="Audit log access is disabled or unauthorized")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
