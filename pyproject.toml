@@ -24,10 +24,17 @@ dependencies = [
 
 [project.optional-dependencies]
 web = ["fastapi>=0.110", "uvicorn>=0.29"]
-dev = ["pytest>=8.0", "ruff>=0.4"]
+dev = ["pytest>=8.0", "ruff>=0.4", "httpx>=0.27"]
 
 [project.scripts]
 endoscopy-polyp-cadx-engine = "endo_cadx_agent.cli:main"
+endoscopy-polyp-cadx-agent = "cli:main"
+
+[tool.setuptools]
+py-modules = ["cli", "enrichment", "simulator"]
+
+[tool.setuptools.packages.find]
+include = ["agents", "agents.*", "endo_cadx_agent", "endo_cadx_agent.*"]
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/endoscopy-polyp-cadx-agent"
