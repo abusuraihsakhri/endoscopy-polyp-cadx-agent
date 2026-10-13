@@ -1,5 +1,7 @@
 # Endoscopy Polyp CADx Agent
 
+### [Open the Live Application →](https://abusuraihsakhri.github.io/endoscopy-polyp-cadx-agent/)
+
 A research-oriented **rule-evaluation demonstration** for synthetic endoscopy-related task parameters. The software evaluates two numerical metrics, a status descriptor, and a critical escalation flag. It produces rule alerts, synthetic dossiers, and (in the Python supervisor) a chained HMAC-SHA256 audit record.
 
 **Clinical limitation:** Despite the historical project name, this repository does **not** contain an endoscopy image model, NBI feature extraction, trained optical classifier, NICE/WASP category assignment, histology prediction, clinical validation, or a polypectomy decision algorithm. The threshold values 25 and 12 are demonstration parameters, **not clinical decision thresholds**. Do not use the results for patient care.
@@ -8,7 +10,7 @@ A research-oriented **rule-evaluation demonstration** for synthetic endoscopy-re
 
 Open [`web/index.html`](web/index.html) in a modern desktop or mobile browser. Enter **synthetic** task/target identifiers, numerical values, a descriptor, and a critical flag, then select **Evaluate rules**. Results may be exported as a JSON file. The interface implements the same three simple rules as the primary Python workers, with no cryptographic signature.
 
-The static site is eligible for deployment through the GitHub Pages workflow (`.github/workflows/pages.yml`). GitHub Pages must use **GitHub Actions** as its build and deployment source. A verified live URL will be linked here when available.
+The static site is deployed through the GitHub Pages workflow (`.github/workflows/pages.yml`), which also checks the published page over HTTPS. The live application is the independent browser demonstration, not the Python API.
 
 The browser demo runs locally with JavaScript: no Pyodide, Python server, model downloads, external fonts, network requests, cookies, or browser storage are required.
 
