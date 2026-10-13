@@ -1,236 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Endoscopy Polyp Cadx Engine — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Endoscopy Polyp CADx Agent | Rule Evaluation</title>
+  <style>
+    :root {color-scheme:dark;--bg:#090f1c;--surface:#121c2c;--border:#2c3c55;--text:#eaf0f8;--muted:#bac9db;--accent:#76b9ff;--warn:#ffd28b;--critical:#ff9c9c}
+    * {box-sizing:border-box}
+    body {margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main {max-width:1150px;margin:auto;padding:28px 20px 60px}
+    header {display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;padding-bottom:22px;border-bottom:1px solid var(--border)}
+    h1 {font-size:clamp(1.4rem,3vw,2rem);line-height:1.25;margin:0}
+    h2 {font-size:1.09rem;margin:0 0 16px}
+    .muted {color:var(--muted)} .subtitle {margin:8px 0 0}
+    .tag {border:1px solid var(--accent);color:var(--accent);border-radius:50px;padding:5px 12px;white-space:nowrap;font-size:.84rem}
+    .notice {margin:22px 0;padding:13px 16px;border-left:3px solid var(--warn);background:#20212a;color:#fff0d4}
+    .metrics {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}
+    .metric,.card {background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .metric {padding:12px 16px}.metric span {display:block;color:var(--muted);font-size:.82rem}
+    .metric strong {font-size:1.35rem;overflow-wrap:anywhere}
+    .grid {display:grid;grid-template-columns:minmax(270px,.95fr) minmax(340px,1.15fr);gap:18px;align-items:start}
+    .card {padding:22px}.field {margin-bottom:14px}
+    label {display:block;margin-bottom:5px;color:var(--muted);font-size:.88rem}
+    input {width:100%;padding:9px 11px;border:1px solid #4b5b74;border-radius:7px;background:#091323;color:var(--text);font:inherit}
+    input:focus-visible,button:focus-visible {outline:3px solid var(--accent);outline-offset:2px}
+    input[type="checkbox"] {width:18px;height:18px;accent-color:var(--accent)}
+    .check {display:flex;gap:9px;align-items:center;color:var(--text)}
+    .check input {flex:none}
+    .actions {display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+    button {border:1px solid #638ab8;border-radius:7px;color:var(--text);background:#1b324b;font:600 .9rem system-ui;cursor:pointer;padding:10px 14px}
+    button.primary {background:#205ca0;border-color:#529be7}
+    button:hover:enabled {filter:brightness(1.18)}
+    button:disabled {opacity:.45;cursor:not-allowed}
+    pre {margin:0;background:#07101f;border:1px solid var(--border);border-radius:8px;padding:15px;min-height:290px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}
+    .error {color:var(--critical);min-height:1.4em}
+    .footnote {margin-top:13px;font-size:.86rem;color:var(--muted)}
+    @media(max-width:740px){.grid{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.card{padding:16px}main{padding:16px 12px 36px}}
+    @media(max-width:420px){.metrics{grid-template-columns:1fr}.actions button{flex:1 1 100%}}
+  </style>
 </head>
 <body>
+<main>
+  <header>
+    <div><h1>Endoscopy Polyp CADx Agent</h1><p class="subtitle muted">Threshold and descriptor evaluation · Offline demonstration</p></div>
+    <span class="tag">Runs locally in your browser</span>
+  </header>
+  <p class="notice" role="note"><strong>Research demonstration only.</strong> This application does not analyze endoscopy images, assign NICE/WASP categories, predict histology, or guide patient care. The numerical thresholds are software demonstration rules, not validated clinical cutoffs. Do not enter patient identifiers or protected health information.</p>
+  <section class="metrics" aria-label="This session">
+    <div class="metric"><span>Last evaluation</span><strong id="m-status">Not run</strong></div>
+    <div class="metric"><span>Evaluations this session</span><strong id="m-tasks">0</strong></div>
+    <div class="metric"><span>Audit signatures</span><strong>Not available</strong></div>
+  </section>
+  <div class="grid">
+    <section class="card" aria-labelledby="form-title">
+      <h2 id="form-title">Evaluate sample parameters</h2>
+      <form id="audit-form">
+        <div class="field"><label for="task_id">Task ID (synthetic only)</label><input id="task_id" name="task_id" value="DEMO-001" maxlength="256" required></div>
+        <div class="field"><label for="target_id">Target ID (synthetic only)</label><input id="target_id" name="target_id" value="SAMPLE-001" maxlength="256" required></div>
+        <div class="field"><label for="primary_metric">Primary metric (alert if greater than 25)</label><input id="primary_metric" name="primary_metric" type="number" value="29.4" step="any" required></div>
+        <div class="field"><label for="secondary_metric">Secondary metric (alert if greater than 12)</label><input id="secondary_metric" name="secondary_metric" type="number" value="14.8" step="any" required></div>
+        <div class="field"><label for="status_descriptor">Status descriptor</label><input id="status_descriptor" name="status_descriptor" value="DISCORDANT_ANOMALY" maxlength="256"></div>
+        <label class="check" for="is_critical"><input id="is_critical" name="is_critical" type="checkbox" checked>Critical escalation flag</label>
+        <div class="actions">
+          <button class="primary" type="submit">Evaluate rules</button>
+          <button id="sample-btn" type="button">Reset sample</button>
+          <button id="export-btn" type="button" disabled>Export JSON</button>
+        </div>
+      </form>
+      <p class="footnote">Rule outputs reproduce the three workers in <code>agents/workers.py</code>; they are not a Python runtime, machine-learning model, or cryptographic audit.</p>
+    </section>
+    <section class="card" aria-labelledby="result-title">
+      <h2 id="result-title">Evaluation result</h2>
+      <p id="error" class="error" role="alert"></p>
+      <pre id="outputConsole" aria-live="polite">Enter synthetic values and select “Evaluate rules” to view a JSON result.</pre>
+      <p class="footnote">No network requests, browser storage, or external libraries are used. JSON is created in memory and can be downloaded locally.</p>
+    </section>
+  </div>
+</main>
+<script>
+"use strict";
+(function () {
+  const get = (id) => document.getElementById(id);
+  const form = get("audit-form");
+  const output = get("outputConsole");
+  const error = get("error");
+  const status = get("m-status");
+  const count = get("m-tasks");
+  const exportButton = get("export-btn");
+  let total = 0;
+  let lastResult = null;
 
-    <div class="header">
-        <div class="header-title">
-            <h1>Endoscopy Polyp Cadx Engine</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
-    </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Endoscopy Polyp Cadx Engine Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "endoscopy-polyp-cadx-engine",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+  function evaluate(payload) {
+    const alerts = [];
+    if (payload.primary_metric > 25) {
+      alerts.push({origin_worker:"InvariantQCWorker",urgency:"ELEVATED_RISK",summary:"Primary Metric Threshold Exceeded"});
+    }
+    if (payload.is_critical_flag || payload.secondary_metric > 12) {
+      alerts.push({origin_worker:"SafetyEscalationWorker",urgency:payload.is_critical_flag?"CRITICAL_STAT_PANIC":"ELEVATED_RISK",summary:"Safety Interlock Triggered"});
+    }
+    if (/(DISCORDANT|ANOMALY|MUTANT|VIOLATION|FAIL|REJECT)/i.test(payload.status_descriptor)) {
+      alerts.push({origin_worker:"ProtocolConformanceWorker",urgency:"ELEVATED_RISK",summary:"Protocol Descriptor Flag Detected"});
+    }
+    const criticalCount = alerts.filter((a) => a.urgency === "CRITICAL_STAT_PANIC").length;
+    const overall = criticalCount ? "CRITICAL_STAT_PANIC" : alerts.length ? "ELEVATED_RISK" : "ROUTINE";
+    const integrity = criticalCount ? "RECALIBRATION_REQUIRED" : alerts.length ? "DISCORDANT_ANOMALY" : "VALIDATED_OPTIMAL";
+    return {
+      mode:"BROWSER_RULE_DEMO",task_id:payload.task_id,target_identifier:payload.target_identifier,
+      overall_urgency:overall,integrity_status:integrity,total_alerts:alerts.length,
+      critical_alerts_count:criticalCount,alerts:alerts,
+      audit_hash:null,clinical_classification:null
+    };
+  }
+  function readPayload() {
+    const taskId = get("task_id").value.trim();
+    const targetId = get("target_id").value.trim();
+    const primary = Number(get("primary_metric").value);
+    const secondary = Number(get("secondary_metric").value);
+    if (!taskId || !targetId || taskId.length > 256 || targetId.length > 256) {
+      throw new Error("Both synthetic identifiers must contain 1–256 characters.");
+    }
+    if (!get("primary_metric").value.trim() || !get("secondary_metric").value.trim() ||
+        !Number.isFinite(primary) || !Number.isFinite(secondary)) {
+      throw new Error("Enter finite values for both numerical metrics.");
+    }
+    const descriptor = get("status_descriptor").value.trim();
+    if ([taskId,targetId,descriptor].some((value) =>
+        /\b\d{3}-\d{2}-\d{4}\b|\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b|\bMRN[:#\s-]*\d{4,10}\b/i.test(value))) {
+      throw new Error("An identifier resembling patient information was detected. Use synthetic values only.");
+    }
+    return {task_id:taskId,target_identifier:targetId,primary_metric:primary,secondary_metric:secondary,
+      status_descriptor:descriptor,is_critical_flag:get("is_critical").checked};
+  }
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    error.textContent = "";
+    try {
+      lastResult = evaluate(readPayload());
+      output.textContent = JSON.stringify(lastResult, null, 2);
+      count.textContent = String(++total);
+      status.textContent = lastResult.overall_urgency;
+      exportButton.disabled = false;
+    } catch (e) {
+      error.textContent = e.message;
+    }
+  });
+  get("sample-btn").addEventListener("click", function () {
+    form.reset();
+    error.textContent = "";
+  });
+  exportButton.addEventListener("click", function () {
+    if (!lastResult) return;
+    const blob = new Blob([JSON.stringify(lastResult, null, 2) + "\n"], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "endoscopy-rule-evaluation.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
 </body>
 </html>
