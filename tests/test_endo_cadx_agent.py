@@ -42,3 +42,30 @@ def test_coordinator():
 def test_cli():
     assert main(["audit", "--task-id", "CLI-01"]) == 0
     assert main(["chat", "What", "is", "the", "system", "status?"]) == 0
+
+
+def test_alternate_csv_false_flag_remains_noncritical(tmp_path):
+    import csv
+    from endo_cadx_agent.cli import main as alt_main
+
+    source = tmp_path / "input.csv"
+    target = tmp_path / "output.csv"
+    source.write_text(
+        "task_id,target_identifier,primary_metric,secondary_metric,is_critical_flag,status_descriptor\n"
+        "DEMO-1,SAMPLE-1,12,4,False,NOMINAL\n",
+        encoding="utf-8",
+    )
+    assert alt_main(["batch", "--input", str(source), "--output", str(target)]) == 0
+    with target.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    assert rows[0]["overall_status"] == ExecutionStatus.NOMINAL.value
+    assert rows[0]["critical_count"] == "0"
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_alternate_engine_rejects_nonfinite_metrics(bad):
+    coord = EndoCADxCoordinator()
+    for primary, secondary in [(bad, 0.0), (0.0, bad)]:
+        payload = FrontierPayload("DEMO-1", "SAMPLE-1", primary, secondary, "NOMINAL")
+        with pytest.raises(ValueError, match="finite"):
+            coord.process(payload)
