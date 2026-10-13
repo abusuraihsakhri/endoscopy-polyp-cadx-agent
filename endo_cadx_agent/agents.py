@@ -2,6 +2,7 @@
 Distributed Component Coordination & Executive Hierarchy for EndoCADx: Colonoscopy Polyp NICE & WASP Optical Diagnosis Agent.
 Domain: Gastroenterology AI
 """
+import math
 import uuid
 from typing import Dict, Any, List, Optional
 from .models import FrontierPayload, AgentTelemetryAlert, ExecutionStatus
@@ -68,6 +69,8 @@ class EndoCADxCoordinator:
         self.execution_ledger: Dict[str, Dict[str, Any]] = {}
 
     def process(self, payload: FrontierPayload) -> Dict[str, Any]:
+        if not math.isfinite(payload.primary_metric) or not math.isfinite(payload.secondary_metric):
+            raise ValueError("Both metrics must be finite numbers")
         all_alerts: List[AgentTelemetryAlert] = []
         all_alerts.extend(self.sub_1.audit(payload))
         all_alerts.extend(self.sub_2.audit(payload))
