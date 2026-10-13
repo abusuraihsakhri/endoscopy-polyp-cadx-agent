@@ -77,7 +77,7 @@ def main(argv=None):
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
         print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
-        return 0
+        return 0 if valid else 1
 
     if args.command == "batch":
         import os
@@ -95,7 +95,10 @@ def main(argv=None):
             fieldnames = list(reader.fieldnames or [])
             rows = list(reader)
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        if not fieldnames:
+            print("Error: Input CSV has no header", file=sys.stderr)
+            return 1
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         errors = 0
         for idx, r in enumerate(rows):
@@ -125,6 +128,10 @@ def main(argv=None):
                 row_dict["integrity_status"] = dossier.integrity_status.value
                 row_dict["total_alerts"] = dossier.total_alerts
                 row_dict["audit_hash"] = dossier.audit_hash
+                # Prevent formula execution when exported CSV is opened in a spreadsheet.
+                for key, value in row_dict.items():
+                    if isinstance(value, str) and value.lstrip(" \t\r\n").startswith(("=", "+", "-", "@")):
+                        row_dict[key] = "'" + value
                 out_rows.append(row_dict)
             except Exception as e:
                 errors += 1
